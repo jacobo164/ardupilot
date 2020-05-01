@@ -489,7 +489,12 @@ bool AP_AHRS_NavEKF::get_position(struct Location &loc) const
     }
 #endif
     }
-    return AP_AHRS_DCM::get_position(loc);
+
+    // fall back to position from DCM
+    if (!always_use_EKF()) {
+        return AP_AHRS_DCM::get_position(loc);
+    }
+    return false;
 }
 
 // status reporting of estimated errors
@@ -1453,6 +1458,9 @@ void AP_AHRS_NavEKF::writeExtNavData(const Vector3f &pos, const Quaternion &quat
 #if HAL_NAVEKF2_AVAILABLE
     EKF2.writeExtNavData(pos, quat, posErr, angErr, timeStamp_ms, resetTime_ms);
 #endif
+#if HAL_NAVEKF3_AVAILABLE
+    EKF3.writeExtNavData(pos, quat, posErr, angErr, timeStamp_ms, resetTime_ms);
+#endif
 }
 
 // Writes the default equivalent airspeed in m/s to be used in forward flight if a measured airspeed is required and not available.
@@ -2174,7 +2182,7 @@ int8_t AP_AHRS_NavEKF::get_primary_core_index() const
     }
 
     // we should never get here
-    AP::internalerror().error(AP_InternalError::error_t::flow_of_control);
+    INTERNAL_ERROR(AP_InternalError::error_t::flow_of_control);
     return -1;
 }
 
@@ -2285,5 +2293,15 @@ bool AP_AHRS_NavEKF::is_ext_nav_used_for_yaw(void) const
     return false;
 }
 
-#endif // AP_AHRS_NAVEKF_AVAILABLE
+// set and save the alt noise parameter value
+void AP_AHRS_NavEKF::set_alt_measurement_noise(float noise)
+{
+#if HAL_NAVEKF2_AVAILABLE
+    EKF2.set_baro_alt_noise(noise);
+#endif
+#if HAL_NAVEKF3_AVAILABLE
+    EKF3.set_baro_alt_noise(noise);
+#endif
+}
 
+#endif // AP_AHRS_NAVEKF_AVAILABLE

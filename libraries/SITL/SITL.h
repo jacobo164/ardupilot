@@ -124,6 +124,10 @@ public:
     static const struct AP_Param::GroupInfo var_info2[];
     static const struct AP_Param::GroupInfo var_info3[];
 
+    // Board Orientation (and inverse)
+    Matrix3f ahrs_rotation;
+    Matrix3f ahrs_rotation_inv;
+
     // noise levels for simulated sensors
     AP_Float baro_noise;  // in metres
     AP_Float baro_drift;  // in metres per second
@@ -359,6 +363,11 @@ public:
     EFI_MegaSquirt efi_ms;
 
     AP_Int8 led_layout;
+
+    // vicon parameters
+    AP_Vector3f vicon_glitch;   // glitch in meters in vicon's local NED frame
+    AP_Int8 vicon_fail;         // trigger vicon failure
+    AP_Int16 vicon_yaw;         // vicon local yaw in degrees
 };
 
 } // namespace SITL
