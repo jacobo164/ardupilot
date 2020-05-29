@@ -34,6 +34,7 @@
 #include <AP_RTC/AP_RTC.h>
 #include <AP_Scheduler/AP_Scheduler.h>
 #include <AP_SerialManager/AP_SerialManager.h>
+#include <AP_RCTelemetry/AP_Spektrum_Telem.h>
 #include <AP_Mount/AP_Mount.h>
 #include <AP_Common/AP_FWVersion.h>
 #include <AP_VisualOdom/AP_VisualOdom.h>
@@ -790,10 +791,6 @@ bool GCS_MAVLINK::should_send_message_in_delay_callback(const ap_message id) con
     // No ID we return true for may take more than a few hundred
     // microseconds to return!
 
-    if (id == MSG_HEARTBEAT || id == MSG_NEXT_PARAM) {
-        return true;
-    }
-
     if (in_hil_mode()) {
         // in HIL we need to keep sending servo values to ensure
         // the simulator doesn't pause, otherwise our sensor
@@ -802,6 +799,15 @@ bool GCS_MAVLINK::should_send_message_in_delay_callback(const ap_message id) con
             id == MSG_SERVO_OUTPUT_RAW) {
             return true;
         }
+    }
+
+    switch (id) {
+    case MSG_HEARTBEAT:
+    case MSG_NEXT_PARAM:
+    case MSG_AUTOPILOT_VERSION:
+        return true;
+    default:
+        return false;
     }
 
     return false;
@@ -1850,7 +1856,12 @@ void GCS::send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list, u
     if (frsky != nullptr) {
         frsky->queue_message(severity, first_piece_of_text);
     }
-
+#if HAL_SPEKTRUM_TELEM_ENABLED
+    AP_Spektrum_Telem* spektrum = AP::spektrum_telem();
+    if (spektrum != nullptr) {
+        spektrum->queue_message(severity, first_piece_of_text);
+    }
+#endif
     AP_Notify *notify = AP_Notify::get_singleton();
     if (notify) {
         notify->send_text(first_piece_of_text);
@@ -2034,7 +2045,6 @@ void GCS::setup_uarts()
             frsky = nullptr;
         }
     }
-
 #if !HAL_MINIMIZE_FEATURES
     ltm_telemetry.init();
     devo_telemetry.init();

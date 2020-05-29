@@ -326,12 +326,13 @@ public:
      * posErr     : 1-sigma spherical position error (m)
      * angErr     : 1-sigma spherical angle error (rad)
      * timeStamp_ms : system time the measurement was taken, not the time it was received (mSec)
+     * delay_ms   : average delay of external nav system measurements relative to inertial measurements
      * resetTime_ms : system time of the last position reset request (mSec)
      *
      * Sensor offsets are pulled directly from the AP_VisualOdom library
      *
     */
-    void writeExtNavData(const Vector3f &pos, const Quaternion &quat, float posErr, float angErr, uint32_t timeStamp_ms, uint32_t resetTime_ms);
+    void writeExtNavData(const Vector3f &pos, const Quaternion &quat, float posErr, float angErr, uint32_t timeStamp_ms, uint16_t delay_ms, uint32_t resetTime_ms);
 
     // return true when external nav data is also being used as a yaw observation
     bool isExtNavUsedForYaw(void);
@@ -879,7 +880,6 @@ private:
     ftype innovVtas;                // innovation output from fusion of airspeed measurements
     ftype varInnovVtas;             // innovation variance output from fusion of airspeed measurements
     bool magFusePerformed;          // boolean set to true when magnetometer fusion has been performed in that time step
-    bool magFuseRequired;           // boolean set to true when magnetometer fusion will be performed in the next time step
     uint32_t prevTasStep_ms;        // time stamp of last TAS fusion step
     uint32_t prevBetaStep_ms;       // time stamp of last synthetic sideslip fusion step
     uint32_t lastMagUpdate_us;      // last time compass was updated in usec
@@ -1221,7 +1221,6 @@ private:
         ftype magXbias;
         ftype magYbias;
         ftype magZbias;
-        uint8_t obsIndex;
         Matrix3f DCM;
         Vector3f MagPred;
         ftype R_MAG;
